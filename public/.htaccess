@@ -1,0 +1,36 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews
+    </IfModule>
+
+    RewriteEngine On
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ /$1 [L,R=301]
+    
+    # Handle Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    #http to https
+
+    #RewriteEngine On
+    #RewriteCond %{HTTPS} off
+    #RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI}
+    
+    php_value memory_limit 2G
+    php_value post_max_size 2G
+    php_value upload_max_filesize 2G
+    
+    # log PHP errors to a file
+php_flag log_errors on
+php_value error_reporting 32767
+php_value error_log "error_log.txt"
+
+</IfModule>
