@@ -1,5 +1,13 @@
 <?php
 
+// Tentukan DB_HOST berdasarkan environment
+// Jika APP_ENV=local, gunakan srv1761.hstgr.io
+// Jika APP_ENV=production atau lainnya (hosting), gunakan localhost
+$dbHost = env('DB_HOST');
+if (!$dbHost) {
+    $dbHost = env('APP_ENV') === 'local' ? 'srv1761.hstgr.io' : 'localhost';
+}
+
 return [
 
     /*
@@ -41,7 +49,7 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
+            'host' => $dbHost,
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
