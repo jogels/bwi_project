@@ -97,8 +97,8 @@
                                 </li>
                                 <li class="menu-item-has-children">
                                     <a><span class="mr-15">
-                                        </span>REGULASI</a>
-                                    <ul class="sub-menu text-muted font-small">
+                                        </span>Wakaf Uang</a>
+                                    <!-- <ul class="sub-menu text-muted font-small">
                                         <li><a href="{{ route('pdf.show', 'undang-undang-wakaf') }}">Undang-undang
                                                 Wakaf</a></li>
                                         <li><a href="{{ route('pdf.show', 'peraturan-pemerintah') }}">Peraturan
@@ -107,7 +107,8 @@
                                                 BWI</a></li>
                                         <li><a href="{{ route('pdf.show', 'peraturan-mentri-agama') }}">Peraturan
                                                 Mentri Agama</a></li>
-                                    </ul>
+                                    </ul> -->
+                                    
                                 </li>
                             </ul>
                         </nav>
