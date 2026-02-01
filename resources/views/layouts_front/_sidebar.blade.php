@@ -22,13 +22,15 @@
                 </ul>
             </li>
             <li class="menu-item-has-children">
-                <a><span class="mr-15"></span>REGULASI</a>
-                <ul class="sub-menu text-muted font-small">
+                <a><span class="mr-15"></span>Wakaf uang</a>
+                 <li><a href="https://https://dki.bwi.go.id/">Literasi</a></li>
+
+                <!-- <ul class="sub-menu text-muted font-small">
                     <li><a href="#">Undang-undang Wakaf</a></li>
                     <li><a href="#">Peraturan Pemerintahan</a></li>
                     <li><a href="#">Peraturan BWI</a></li>
                     <li><a href="#">Peraturan Mentri Agama</a></li>
-                </ul>
+                </ul> -->
             </li>
         </ul>
     </div>
