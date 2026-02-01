@@ -214,7 +214,7 @@
     </div>
 
     <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/+6285776111187" class="float-whatsapp" target="_blank">
+    <a href="https://wa.me/+6285772095746" class="float-whatsapp" target="_blank">
         <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.svg" alt="WhatsApp" />
         <span>Konsultasi Wakaf</span>
     </a>
