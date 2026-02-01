@@ -22,7 +22,16 @@
                 </ul>
             </li>
             <li class="menu-item-has-children">
-                <a><span class="mr-15"></span>Wakaf uang</a>
+                <a><span class="mr-15"></span>Regulasi</a>
+                <ul class="sub-menu text-muted font-small">
+                    <li><a href="#">Undang-undang Wakaf</a></li>
+                    <li><a href="#">Peraturan Pemerintahan</a></li>
+                    <li><a href="#">Peraturan BWI</a></li>
+                    <li><a href="#">Peraturan Mentri Agama</a></li>
+                </ul>
+            </li>
+            <li class="menu-item-has-children">
+                <a><span class="mr-15"></span>Wakaf Uang</a>
                  <li><a href="https://https://dki.bwi.go.id/">Literasi</a></li>
 
                 <!-- <ul class="sub-menu text-muted font-small">
@@ -96,6 +105,21 @@
                                         {{-- <li><a href="home-3.html">Formulir Pergantian / Penetapan Nazir</a></li> --}}
                                         <li><a href="https://www.bwi.go.id/literasiwakaf/">Literasi</a></li>
                                     </ul>
+                                </li>
+                                <li class="menu-item-has-children">
+                                    <a><span class="mr-15">
+                                        </span>Regulasi</a>
+                                    <ul class="sub-menu text-muted font-small">
+                                        <li><a href="{{ route('pdf.show', 'undang-undang-wakaf') }}">Undang-undang
+                                                Wakaf</a></li>
+                                        <li><a href="{{ route('pdf.show', 'peraturan-pemerintah') }}">Peraturan
+                                                Pemerintahan</a></li>
+                                        <li><a href="{{ route('pdf.show', 'peraturan-bwi') }}">Peraturan
+                                                BWI</a></li>
+                                        <li><a href="{{ route('pdf.show', 'peraturan-mentri-agama') }}">Peraturan
+                                                Mentri Agama</a></li>
+                                    </ul>
+                                    
                                 </li>
                                 <li class="menu-item-has-children">
                                     <a><span class="mr-15">
