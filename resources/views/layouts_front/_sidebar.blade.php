@@ -124,6 +124,8 @@
                                 <li class="menu-item-has-children">
                                     <a><span class="mr-15">
                                         </span>Wakaf Uang</a>
+                                        <li><a href="https://dki.bwi.go.id/">Wakaf Uang</a></li>
+
                                     <!-- <ul class="sub-menu text-muted font-small">
                                         <li><a href="{{ route('pdf.show', 'undang-undang-wakaf') }}">Undang-undang
                                                 Wakaf</a></li>
