@@ -30,7 +30,7 @@
                     <li><a href="#">Peraturan Mentri Agama</a></li>
                 </ul>
             </li>
-            <!-- <li class="menu-item-has-children">
+            <li class="menu-item-has-children">
                 <a><span class="mr-15"></span>Wakaf Uang</a>
                  <li><a href="https://https://dki.bwi.go.id/">Literasi</a></li>
 
@@ -40,7 +40,7 @@
                     <li><a href="#">Peraturan BWI</a></li>
                     <li><a href="#">Peraturan Mentri Agama</a></li>
                 </ul> -->
-            </li> -->
+            </li>
         </ul>
     </div>
 </aside>
@@ -123,7 +123,7 @@
                                 </li>
                                 <li class="menu-item-has-children">
                                     <a><span class="mr-15">
-                                        </span>Wakaf Uang</a>
+                                        <!-- </span>Wakaf Uang</a> -->
                                         <li><a href="https://dki.bwi.go.id/">Wakaf Uang</a></li>
 
                                     <!-- <ul class="sub-menu text-muted font-small">
