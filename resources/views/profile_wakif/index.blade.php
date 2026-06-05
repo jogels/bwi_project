@@ -171,43 +171,7 @@
                         <h4 class="widget-title text-white mb-0">Maps Lokasi</h4>
                     </div>
                     <div class="card-body p-0">
-                        <div id="map" class="border-radius-10" style="height: 300px;"></div>
-                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-                        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-                        <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                // Wait for container to be ready
-                                setTimeout(function() {
-                                    // Initialize map
-                                    var map = L.map('map', {
-                                        zoomControl: true,
-                                        scrollWheelZoom: false
-                                    }).setView([{{ $data['location']['latitude'] }}, {{ $data['location']['longitude'] }}], 15);
-
-                                    // Add tile layer with error handling
-                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-                                        maxZoom: 19,
-                                        minZoom: 2
-                                    }).addTo(map);
-
-                                    // Add marker
-                                    var marker = L.marker([{{ $data['location']['latitude'] }}, {{ $data['location']['longitude'] }}], {
-                                        draggable: false
-                                    }).addTo(map);
-
-                                    // Add popup with sanitized content
-                                    var popupContent = document.createElement('div');
-                                    popupContent.innerHTML = "<strong>{{ addslashes($data['wakaf_info']['alamat']) }}</strong>";
-                                    marker.bindPopup(popupContent).openPopup();
-
-                                    // Force map refresh
-                                    map.invalidateSize();
-                                }, 100);
-                            });
-                        </script>
+                        <div id="map" class="border-radius-10"></div>
                     </div>
                 </div>
                 @endif
@@ -216,7 +180,7 @@
     </div>
 @endsection
 
-@push('styles')
+@section('extra_style')
     <style>
         :root {
             --primary-color: #0F3525;
@@ -311,92 +275,100 @@
             opacity: 1;
         }
 
-        #map {
+        #map,
+        #map .leaflet-container {
             height: 400px;
+            min-height: 400px;
             width: 100%;
             z-index: 1;
             border-radius: 10px;
         }
 
-        /* Add this to ensure the map container is visible */
         .leaflet-container {
-            background-color: #fff;
+            background-color: #ddd;
             z-index: 1;
         }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
-@endpush
+@endsection
 
-@push('scripts')
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+@section('extra_script')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             @if (isset($data['location']) && isset($data['location']['latitude']) && isset($data['location']['longitude']))
-                // Initialize the map
-                var map = L.map('map', {
+            var lat = {{ (float) $data['location']['latitude'] }};
+            var lng = {{ (float) $data['location']['longitude'] }};
+            var zoom = {{ (int) ($data['location']['zoom'] ?? 15) }};
+            var map = null;
+
+            function initWakafMap() {
+                var mapEl = document.getElementById('map');
+                if (!mapEl || map) {
+                    return;
+                }
+
+                map = L.map('map', {
                     zoomControl: true,
                     scrollWheelZoom: true
-                });
+                }).setView([lat, lng], zoom);
 
-                // Add OpenStreetMap tiles
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    subdomains: ['a', 'b', 'c'],
+                    maxZoom: 19,
+                    minZoom: 2
                 }).addTo(map);
 
-                // Set view to wakaf location
-                const lat = {{ $data['location']['latitude'] }};
-                const lng = {{ $data['location']['longitude'] }};
-                map.setView([lat, lng], {{ $data['location']['zoom'] ?? 15 }});
+                L.marker([lat, lng]).addTo(map)
+                    .bindPopup(
+                        '<div class="text-center">' +
+                        '<strong class="d-block mb-1">{{ addslashes($data['wakaf_info']['peruntukan']) }}</strong>' +
+                        '<small>{{ addslashes($data['wakaf_info']['alamat']) }}</small>' +
+                        '</div>'
+                    )
+                    .openPopup();
 
-                // Add marker
-                const marker = L.marker([lat, lng]).addTo(map);
-                marker.bindPopup(`
-                    <div class="text-center">
-                        <strong class="d-block mb-1">{{ $data['wakaf_info']['peruntukan'] }}</strong>
-                        <small>{{ $data['wakaf_info']['alamat'] }}</small>
-                    </div>
-                `).openPopup();
-
-                // Fix map display issues
-                setTimeout(() => {
+                map.whenReady(function() {
                     map.invalidateSize();
-                }, 100);
+                });
+            }
+
+            window.addEventListener('load', function() {
+                setTimeout(initWakafMap, 500);
+            });
+
+            window.addEventListener('resize', function() {
+                if (map) {
+                    map.invalidateSize();
+                }
+            });
             @endif
 
-
-            // Initialize Fancybox for gallery
-            Fancybox.bind("[data-fancybox]", {
-                // Custom options
-                Toolbar: {
-                    display: [{
-                            id: "prev",
-                            position: "center"
-                        },
-                        {
-                            id: "counter",
-                            position: "center"
-                        },
-                        {
-                            id: "next",
-                            position: "center"
-                        },
-                        "zoom",
-                        "slideshow",
-                        "fullscreen",
-                        "close",
-                    ],
-                },
-                // Add animation
-                Image: {
-                    transition: "slide",
-                },
-            });
+            if (typeof Fancybox !== 'undefined') {
+                Fancybox.bind('[data-fancybox]', {
+                    Toolbar: {
+                        display: [
+                            { id: 'prev', position: 'center' },
+                            { id: 'counter', position: 'center' },
+                            { id: 'next', position: 'center' },
+                            'zoom',
+                            'slideshow',
+                            'fullscreen',
+                            'close',
+                        ],
+                    },
+                    Image: {
+                        transition: 'slide',
+                    },
+                });
+            }
         });
     </script>
-@endpush
+@endsection
