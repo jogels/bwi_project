@@ -31,15 +31,7 @@
                 </ul>
             </li>
             <li class="menu-item-has-children">
-                <a><span class="mr-15"></span>Wakaf Uang</a>
-                 <li><a href="https://https://dki.bwi.go.id/">Literasi</a></li>
-
-                <!-- <ul class="sub-menu text-muted font-small">
-                    <li><a href="#">Undang-undang Wakaf</a></li>
-                    <li><a href="#">Peraturan Pemerintahan</a></li>
-                    <li><a href="#">Peraturan BWI</a></li>
-                    <li><a href="#">Peraturan Mentri Agama</a></li>
-                </ul> -->
+                <a href="https://dki.bwi.go.id/"><span class="mr-15"></span>Wakaf Uang</a>
             </li>
         </ul>
     </div>
@@ -80,6 +72,7 @@
                                     <li class="cat-item cat-item-4"><a href="{{ route('pdf.show', 'peraturan-pemerintah') }}">Peraturan Pemerintahan</a></li>
                                     <li class="cat-item cat-item-5"><a href="{{ route('pdf.show', 'peraturan-bwi') }}">Peraturan BWI</a></li>
                                     <li class="cat-item cat-item-6"><a href="{{ route('pdf.show', 'peraturan-mentri-agama') }}">Peraturan Mentri Agama</a></li>
+                                    <li class="cat-item cat-item-8"><a href="https://dki.bwi.go.id/">Wakaf Uang</a></li>
                                 </ul>
                         <nav class="flex-grow-1">
 
@@ -122,21 +115,7 @@
                                     
                                 </li>
                                 <li class="menu-item-has-children">
-                                    <a><span class="mr-15">
-                                        <!-- </span>Wakaf Uang</a> -->
-                                        <li><a href="https://dki.bwi.go.id/">Wakaf Uang</a></li>
-
-                                    <!-- <ul class="sub-menu text-muted font-small">
-                                        <li><a href="{{ route('pdf.show', 'undang-undang-wakaf') }}">Undang-undang
-                                                Wakaf</a></li>
-                                        <li><a href="{{ route('pdf.show', 'peraturan-pemerintah') }}">Peraturan
-                                                Pemerintahan</a></li>
-                                        <li><a href="{{ route('pdf.show', 'peraturan-bwi') }}">Peraturan
-                                                BWI</a></li>
-                                        <li><a href="{{ route('pdf.show', 'peraturan-mentri-agama') }}">Peraturan
-                                                Mentri Agama</a></li>
-                                    </ul> -->
-                                    
+                                    <a href="https://dki.bwi.go.id/"><span class="mr-15"></span>Wakaf Uang</a>
                                 </li>
                             </ul>
                         </nav>
