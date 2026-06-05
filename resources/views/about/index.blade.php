@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <div class="row" style="height: 60vh">
+    <div class="row">
         <!-- main content -->
         <div class="col-lg-12">
             <div class="row">
@@ -15,17 +15,13 @@
                         </div>
                     </div>
                     <div class="loop-list-style-1">
-                        <article class="background-white border-radius-10 mb-30 wow fadeIn animated">
+                        <article class="background-white border-radius-10 mb-30">
                             <div class="p-10">
-                                <div class="color-black" style="justify-content: center; align-items: center;
-flex-direction: column;
-display: flex;">
-                                    
+                                <div class="color-black text-center mb-30">
                                     <h2>Sejarah Singkat</h2>
-                                    
                                     <h2 style="margin-top: 0">Badan Wakaf Indonesia Perwakilan Provinsi DKI Jakarta</h2>
                                 </div>
-                                <div class="entry-meta meta-1 font-x-small color-grey float-left">
+                                <div class="font-x-small color-grey">
                                     
                                     <br/>
                                     <br/>
