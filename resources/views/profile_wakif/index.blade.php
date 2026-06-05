@@ -144,17 +144,25 @@
 
             <!-- Map Section -->
             <div class="col-lg-6">
+                @php
+                    $hasMapCoords = !empty($data['location']['latitude']) && !empty($data['location']['longitude']);
+                    $hasGeocodeFallback = !empty($data['location']['geocode_queries']);
+                    $showMap = $hasMapCoords || $hasGeocodeFallback;
+                @endphp
                 <div class="card border-radius-10 bg-white mb-30">
                     <div class="card-header" style="background-color: #0F3525;">
                         <h4 class="widget-title text-white mb-0">Lokasi Wakaf</h4>
                     </div>
                     <div class="card-body p-0">
-                        @if (isset($data['location']) && isset($data['location']['latitude']) && isset($data['location']['longitude']))
+                        @if ($showMap)
                             <div class="p-3">
                                 <small class="text-muted">
                                     <i class="mdi mdi-map-marker" style="color: #0F3525;"></i>
                                     {{ $data['wakaf_info']['alamat'] }}
                                 </small>
+                                @if (!empty($data['location']['geocoded']))
+                                    <small class="d-block text-muted mt-1">Titik lokasi diperkirakan dari alamat/kelurahan.</small>
+                                @endif
                             </div>
                         @else
                             <div class="text-center py-5">
@@ -165,7 +173,7 @@
                     </div>
                 </div>
 
-                @if (isset($data['location']) && isset($data['location']['latitude']) && isset($data['location']['longitude']))
+                @if ($showMap)
                 <div class="card border-radius-10 bg-white mb-30">
                     <div class="card-header" style="background-color: #0F3525;">
                         <h4 class="widget-title text-white mb-0">Maps Lokasi</h4>
@@ -302,22 +310,66 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            @if (isset($data['location']) && isset($data['location']['latitude']) && isset($data['location']['longitude']))
-            var lat = {{ (float) $data['location']['latitude'] }};
-            var lng = {{ (float) $data['location']['longitude'] }};
-            var zoom = {{ (int) ($data['location']['zoom'] ?? 15) }};
+            @if ((!empty($data['location']['latitude']) && !empty($data['location']['longitude'])) || !empty($data['location']['geocode_queries']))
+            var lat = @json($data['location']['latitude'] ?? null);
+            var lng = @json($data['location']['longitude'] ?? null);
+            var geocodeQueries = @json($data['location']['geocode_queries'] ?? []);
+            var zoom = {{ (int) ($data['location']['zoom'] ?? 16) }};
             var map = null;
 
-            function initWakafMap() {
-                var mapEl = document.getElementById('map');
-                if (!mapEl || map) {
-                    return;
+            function isValidJakartaCoords(latitude, longitude) {
+                return latitude !== null && longitude !== null
+                    && latitude < -5.8 && latitude > -6.5
+                    && longitude > 106.5 && longitude < 107.2;
+            }
+
+            function geocodeFromQueries(queries) {
+                if (!queries.length) {
+                    return Promise.resolve(null);
                 }
 
+                var query = queries.shift();
+
+                return fetch('https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
+                    q: query,
+                    format: 'json',
+                    limit: 1,
+                    countrycodes: 'id'
+                }), {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(results) {
+                    if (results.length) {
+                        var resolvedLat = parseFloat(results[0].lat);
+                        var resolvedLng = parseFloat(results[0].lon);
+                        if (isValidJakartaCoords(resolvedLat, resolvedLng)) {
+                            return { lat: resolvedLat, lng: resolvedLng };
+                        }
+                    }
+
+                    return geocodeFromQueries(queries);
+                })
+                .catch(function() {
+                    return geocodeFromQueries(queries);
+                });
+            }
+
+            function resolveCoordinates() {
+                if (isValidJakartaCoords(lat, lng)) {
+                    return Promise.resolve({ lat: lat, lng: lng });
+                }
+
+                return geocodeFromQueries(geocodeQueries.slice());
+            }
+
+            function renderMap(coords) {
                 map = L.map('map', {
                     zoomControl: true,
                     scrollWheelZoom: true
-                }).setView([lat, lng], zoom);
+                }).setView([coords.lat, coords.lng], zoom);
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -326,7 +378,7 @@
                     minZoom: 2
                 }).addTo(map);
 
-                L.marker([lat, lng]).addTo(map)
+                L.marker([coords.lat, coords.lng]).addTo(map)
                     .bindPopup(
                         '<div class="text-center">' +
                         '<strong class="d-block mb-1">{{ addslashes($data['wakaf_info']['peruntukan']) }}</strong>' +
@@ -337,6 +389,22 @@
 
                 map.whenReady(function() {
                     map.invalidateSize();
+                });
+            }
+
+            function initWakafMap() {
+                var mapEl = document.getElementById('map');
+                if (!mapEl || map) {
+                    return;
+                }
+
+                resolveCoordinates().then(function(coords) {
+                    if (!coords) {
+                        mapEl.innerHTML = '<div class="text-center py-5 text-muted">Lokasi peta tidak dapat ditampilkan.</div>';
+                        return;
+                    }
+
+                    renderMap(coords);
                 });
             }
 

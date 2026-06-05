@@ -60,11 +60,7 @@ class ProfileWakifController extends Controller
                 'no_aiw' => $wakafLand->aiw_no ?? '-',
                 'tanggal_aiw' => $wakafLand->aiw_date ?? '-',
             ],
-            'location' => [
-                'latitude' => $wakafLand->latitude ?? 0,
-                'longitude' => $wakafLand->longitude ?? 0,
-                'zoom' => 15,
-            ],
+            'location' => resolveWakafLocation($wakafLand),
             'gallery' => $gallery
         ];
 
