@@ -15,9 +15,9 @@
                                 </div>
                             </div>
                             <div class="loop-list-style-1">
-                                <article class="background-white border-radius-10 mb-30 wow fadeIn animated">
+                                <article class="background-white border-radius-10 mb-30">
                                     <div class="p-10">
-                                        <div class="entry-meta meta-1 font-x-small color-grey float-left">
+                                        <div class="font-x-small color-grey">
                                             <p>The following is the organizational structure of our company. This structure
                                                 defines the key leadership roles and how each department works together to
                                                 achieve the company's mission and vision.</p>
