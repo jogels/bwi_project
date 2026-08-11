@@ -61,14 +61,14 @@ var table = $('#table-data').DataTable({
     url: '{{ url('/galeritable') }}',
   },
   columns: [
-    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+    { data: 'DT_Row_Index', name: 'DT_Row_Index', orderable: false, searchable: false },
     { data: 'gambar', name: 'gambar', orderable: false, searchable: false },
     { data: 'title', name: 'title' },
     {
       data: 'description',
       name: 'description',
       render: function (data) {
-        if (!data) return '-';
+        if (!data || data === '-') return '-';
         return data.length > 80 ? data.substring(0, 80) + '...' : data;
       }
     },
@@ -79,7 +79,10 @@ var table = $('#table-data').DataTable({
   ],
   columnDefs: [
     { targets: '_all', className: 'center' }
-  ]
+  ],
+  error: function (xhr, error, thrown) {
+    console.error('Galeri DataTable error', xhr.status, xhr.responseText, error, thrown);
+  }
 });
 
 function edit(id) {

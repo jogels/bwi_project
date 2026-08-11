@@ -3,13 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Gallery;
-use Auth;
-use Carbon\Carbon;
-use Session;
-use DB;
-use File;
-use Yajra\Datatables\Datatables;
+use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class GaleriController extends Controller
 {
@@ -22,25 +17,31 @@ class GaleriController extends Controller
     {
         $data = DB::table('galeri')
             ->orderBy('sort_order', 'asc')
-            ->orderBy('id', 'desc')
-            ->get();
+            ->orderBy('id', 'desc');
 
-        return Datatables::of($data)
-            ->addColumn('aksi', function ($data) {
+        return DataTables::of($data)
+            ->addColumn('aksi', function ($row) {
                 return '<div class="btn-group">' .
-                    '<button type="button" onclick="edit(' . $data->id . ')" class="btn btn-info btn-lg" title="edit">' .
+                    '<button type="button" onclick="edit(' . $row->id . ')" class="btn btn-info btn-lg" title="edit">' .
                     '<label class="fa fa-pencil-alt"></label></button>' .
-                    '<button type="button" onclick="hapus(' . $data->id . ')" class="btn btn-danger btn-lg" title="hapus">' .
+                    '<button type="button" onclick="hapus(' . $row->id . ')" class="btn btn-danger btn-lg" title="hapus">' .
                     '<label class="fa fa-trash"></label></button>' .
                     '</div>';
             })
-            ->addColumn('gambar', function ($data) {
-                if (empty($data->image)) {
+            ->addColumn('gambar', function ($row) {
+                if (empty($row->image)) {
                     return '-';
                 }
 
-                $src = (strpos($data->image, 'http') === 0) ? $data->image : asset($data->image);
-                return '<img src="' . $src . '" alt="' . e($data->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;">';
+                $src = (strpos($row->image, 'http') === 0) ? $row->image : asset($row->image);
+
+                return '<img src="' . e($src) . '" alt="' . e($row->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;">';
+            })
+            ->editColumn('description', function ($row) {
+                return $row->description ?: '-';
+            })
+            ->editColumn('label', function ($row) {
+                return $row->label ?: '-';
             })
             ->rawColumns(['aksi', 'gambar'])
             ->addIndexColumn()
