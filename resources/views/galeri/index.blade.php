@@ -1,5 +1,6 @@
 @extends('main')
 @section('content')
+@include('galeri.tambah')
 
 <div class="content-wrapper">
   <div class="row">
@@ -16,7 +17,7 @@
         <div class="card-body">
           <h4 class="card-title">Manajemen Galeri</h4>
           <div class="col-md-12 col-sm-12 col-xs-12" align="right" style="margin-bottom: 15px;">
-            <button type="button" class="btn btn-info" disabled title="Form tambah akan menyusul">
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#tambah" onclick="resetFormGaleri()">
               <i class="fa fa-plus"></i>&nbsp;&nbsp;Add Data
             </button>
           </div>
@@ -38,9 +39,6 @@
               </tbody>
             </table>
           </div>
-          <p class="text-muted mt-3 mb-0" style="font-size: 13px;">
-            Tabel database <code>galeri</code> sudah siap. Form tambah/edit/hapus akan dikerjakan pada tahap berikutnya.
-          </p>
         </div>
       </div>
     </div>
@@ -83,6 +81,82 @@ var table = $('#table-data').DataTable({
   error: function (xhr, error, thrown) {
     console.error('Galeri DataTable error', xhr.status, xhr.responseText, error, thrown);
   }
+});
+
+function resetFormGaleri() {
+  $('#form-galeri')[0].reset();
+  $('#galeri-sort-order').val(0);
+  $('#galeri-status').val('aktif');
+  $('#galeri-image-preview').hide().find('img').attr('src', '');
+}
+
+$('#galeri-image').on('change', function () {
+  var file = this.files[0];
+  if (!file) {
+    $('#galeri-image-preview').hide();
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    $('#galeri-image-preview').show().find('img').attr('src', e.target.result);
+  };
+  reader.readAsDataURL(file);
+});
+
+$('#simpan-galeri').on('click', function () {
+  var title = $.trim($('#galeri-title').val());
+  if (!title) {
+    iziToast.warning({
+      icon: 'fa fa-info',
+      message: 'Judul wajib diisi!',
+    });
+    return;
+  }
+
+  var formData = new FormData($('#form-galeri')[0]);
+  formData.append('_token', '{{ csrf_token() }}');
+
+  var $btn = $(this);
+  $btn.prop('disabled', true).text('Menyimpan...');
+
+  $.ajax({
+    type: 'POST',
+    url: baseUrl + '/simpangaleri',
+    data: formData,
+    processData: false,
+    contentType: false,
+    cache: false,
+    success: function (data) {
+      $btn.prop('disabled', false).text('Submit');
+
+      if (data.status == 1) {
+        iziToast.success({
+          icon: 'fa fa-save',
+          message: 'Data galeri berhasil disimpan!',
+        });
+        $('#tambah').modal('hide');
+        resetFormGaleri();
+        table.ajax.reload(null, false);
+      } else {
+        iziToast.warning({
+          icon: 'fa fa-info',
+          message: data.message || 'Data gagal disimpan!',
+        });
+      }
+    },
+    error: function (xhr) {
+      $btn.prop('disabled', false).text('Submit');
+      var message = 'Terjadi kesalahan saat menyimpan data.';
+      if (xhr.responseJSON && xhr.responseJSON.message) {
+        message = xhr.responseJSON.message;
+      }
+      iziToast.error({
+        icon: 'fa fa-times',
+        message: message,
+      });
+    }
+  });
 });
 
 function edit(id) {

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 class GaleriController extends Controller
@@ -46,5 +48,68 @@ class GaleriController extends Controller
             ->rawColumns(['aksi', 'gambar'])
             ->addIndexColumn()
             ->make(true);
+    }
+
+    public function simpan(Request $req)
+    {
+        $req->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'label' => 'nullable|string|max:100',
+            'sort_order' => 'nullable|integer|min:0',
+            'status' => 'nullable|in:aktif,nonaktif',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        // Hanya INSERT ke tabel galeri. Tidak menghapus/mengubah data lain.
+        DB::beginTransaction();
+        try {
+            $imagePath = null;
+
+            if ($req->hasFile('image')) {
+                $file = $req->file('image');
+                $tgl = Carbon::now('Asia/Jakarta');
+                $folder = $tgl->format('Ym') . $tgl->timestamp;
+                $dir = 'image/uploads/Galeri/' . $folder;
+                $path = public_path($dir);
+
+                if (!File::exists($path)) {
+                    File::makeDirectory($path, 0777, true);
+                }
+
+                $name = 'galeri_' . $tgl->timestamp . '.' . $file->getClientOriginalExtension();
+                $file->move($path, $name);
+                $imagePath = $dir . '/' . $name;
+
+                if (function_exists('compressImage')) {
+                    compressImage($file->getClientOriginalExtension(), $imagePath, $imagePath, 60);
+                }
+            }
+
+            DB::table('galeri')->insert([
+                'title' => $req->title,
+                'description' => $req->description,
+                'image' => $imagePath,
+                'label' => $req->label,
+                'sort_order' => (int) ($req->sort_order ?? 0),
+                'status' => $req->status ?: 'aktif',
+                'created_at' => Carbon::now('Asia/Jakarta'),
+                'updated_at' => Carbon::now('Asia/Jakarta'),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 1,
+                'message' => 'Data galeri berhasil disimpan',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'status' => 2,
+                'message' => 'Gagal menyimpan data: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
