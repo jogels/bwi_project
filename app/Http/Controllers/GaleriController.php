@@ -36,7 +36,12 @@ class GaleriController extends Controller
                     return '-';
                 }
 
-                return '<img src="' . e($src) . '" alt="' . e($row->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'File tidak ditemukan\';">';
+                $missing = !gallery_image_exists($row->image);
+                $badge = $missing
+                    ? '<div style="font-size:11px;color:#c0392b;margin-top:4px;">File belum ada di server</div>'
+                    : '';
+
+                return '<img src="' . e($src) . '" alt="' . e($row->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;">' . $badge;
             })
             ->editColumn('description', function ($row) {
                 return $row->description ?: '-';
@@ -108,6 +113,8 @@ class GaleriController extends Controller
                 'status' => 1,
                 'message' => 'Data galeri berhasil disimpan',
                 'image_url' => gallery_image_url($imagePath),
+                'image_exists' => $imagePath ? gallery_image_exists($imagePath) : false,
+                'saved_to' => $imagePath ? public_path($imagePath) : null,
             ]);
         } catch (\Exception $e) {
             DB::rollback();

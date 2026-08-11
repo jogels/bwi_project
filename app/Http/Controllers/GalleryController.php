@@ -21,6 +21,7 @@ class GalleryController extends Controller
                     'description' => $item->description,
                     'label' => $item->label,
                     'image' => gallery_image_url($item->image),
+                    'image_missing' => !gallery_image_exists($item->image),
                 ];
             });
 
