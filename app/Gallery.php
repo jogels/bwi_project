@@ -12,6 +12,8 @@ class Gallery extends Model
         'title',
         'description',
         'image',
+        'style',
+        'photo_position',
         'label',
         'sort_order',
         'status',

@@ -10,6 +10,12 @@ use Yajra\DataTables\Facades\DataTables;
 
 class GaleriController extends Controller
 {
+    private $styleLabels = [
+        'foto' => 'foto',
+        'foto_deskripsi' => 'foto+Deskripsi',
+        'carousel' => 'Carousel',
+    ];
+
     public function index()
     {
         return view('galeri.index');
@@ -43,11 +49,17 @@ class GaleriController extends Controller
 
                 return '<img src="' . e($src) . '" alt="' . e($row->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;">' . $badge;
             })
+            ->addColumn('style_label', function ($row) {
+                $style = $row->style ?? 'foto';
+                $text = $this->styleLabels[$style] ?? $style;
+                if ($style === 'foto_deskripsi') {
+                    $pos = ($row->photo_position ?? 'kanan') === 'kiri' ? 'foto kiri' : 'foto kanan';
+                    $text .= ' (' . $pos . ')';
+                }
+                return $text;
+            })
             ->editColumn('description', function ($row) {
                 return $row->description ?: '-';
-            })
-            ->editColumn('label', function ($row) {
-                return $row->label ?: '-';
             })
             ->rawColumns(['aksi', 'gambar'])
             ->addIndexColumn()
@@ -68,7 +80,8 @@ class GaleriController extends Controller
             'description' => $data->description,
             'image' => $data->image,
             'image_url' => $data->image ? asset($data->image) : null,
-            'label' => $data->label,
+            'style' => $data->style ?? 'foto',
+            'photo_position' => $data->photo_position ?? 'kanan',
             'sort_order' => $data->sort_order,
             'status' => $data->status,
         ]);
@@ -80,13 +93,17 @@ class GaleriController extends Controller
             'id' => 'nullable|integer',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'label' => 'nullable|string|max:100',
-            'sort_order' => 'nullable|integer|min:0',
+            'style' => 'required|in:foto,foto_deskripsi,carousel',
+            'photo_position' => 'nullable|in:kiri,kanan',
             'status' => 'nullable|in:aktif,nonaktif',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $isUpdate = !empty($req->id);
+        $style = $req->style;
+        $photoPosition = $style === 'foto_deskripsi'
+            ? ($req->photo_position ?: 'kanan')
+            : null;
 
         DB::beginTransaction();
         try {
@@ -97,22 +114,20 @@ class GaleriController extends Controller
                 }
 
                 $imagePath = $existing->image;
-
                 if ($req->hasFile('image')) {
                     $newImage = $this->storeGaleriImage($req->file('image'));
                     $this->deleteGaleriImageFile($existing->image);
                     $imagePath = $newImage;
                 }
 
-                // Hanya UPDATE baris di tabel galeri
                 DB::table('galeri')
                     ->where('id', $req->id)
                     ->update([
                         'title' => $req->title,
                         'description' => $req->description,
                         'image' => $imagePath,
-                        'label' => $req->label,
-                        'sort_order' => (int) ($req->sort_order ?? 0),
+                        'style' => $style,
+                        'photo_position' => $photoPosition,
                         'status' => $req->status ?: 'aktif',
                         'updated_at' => Carbon::now('Asia/Jakarta'),
                     ]);
@@ -126,18 +141,20 @@ class GaleriController extends Controller
                 ]);
             }
 
-            $imagePath = null;
-            if ($req->hasFile('image')) {
-                $imagePath = $this->storeGaleriImage($req->file('image'));
+            if (!$req->hasFile('image')) {
+                throw new \RuntimeException('Gambar wajib diupload untuk data baru.');
             }
 
-            // Hanya INSERT ke tabel galeri
+            $imagePath = $this->storeGaleriImage($req->file('image'));
+            $nextOrder = ((int) DB::table('galeri')->max('sort_order')) + 1;
+
             DB::table('galeri')->insert([
                 'title' => $req->title,
                 'description' => $req->description,
                 'image' => $imagePath,
-                'label' => $req->label,
-                'sort_order' => (int) ($req->sort_order ?? 0),
+                'style' => $style,
+                'photo_position' => $photoPosition,
+                'sort_order' => $nextOrder,
                 'status' => $req->status ?: 'aktif',
                 'created_at' => Carbon::now('Asia/Jakarta'),
                 'updated_at' => Carbon::now('Asia/Jakarta'),
@@ -148,7 +165,7 @@ class GaleriController extends Controller
             return response()->json([
                 'status' => 1,
                 'message' => 'Data galeri berhasil disimpan',
-                'image_url' => $imagePath ? asset($imagePath) : null,
+                'image_url' => asset($imagePath),
             ]);
         } catch (\Exception $e) {
             DB::rollback();
@@ -169,16 +186,12 @@ class GaleriController extends Controller
 
         DB::beginTransaction();
         try {
-            // Ambil hanya dari tabel galeri
             $data = DB::table('galeri')->where('id', $id)->first();
             if (!$data) {
                 throw new \RuntimeException('Data galeri tidak ditemukan.');
             }
 
-            // Hapus file gambar galeri saja (jika path-nya milik Galeri)
             $this->deleteGaleriImageFile($data->image);
-
-            // Hapus hanya 1 baris di tabel galeri
             DB::table('galeri')->where('id', $id)->delete();
 
             DB::commit();
@@ -237,24 +250,16 @@ class GaleriController extends Controller
         }
 
         $relative = ltrim(str_replace('\\', '/', $imagePath), '/');
-
-        // Amankan: hanya hapus file di folder Galeri
         if (strpos($relative, 'image/uploads/Galeri/') !== 0) {
             return;
         }
 
-        $candidates = [
-            base_path($relative),
-            public_path($relative),
-        ];
-
-        foreach ($candidates as $file) {
+        foreach ([base_path($relative), public_path($relative)] as $file) {
             if (is_file($file)) {
                 @unlink($file);
             }
         }
 
-        // Hapus folder kosong jika memungkinkan
         $dir = dirname(base_path($relative));
         if (is_dir($dir) && count(glob($dir . '/*')) === 0) {
             @rmdir($dir);

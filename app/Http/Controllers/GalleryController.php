@@ -19,9 +19,10 @@ class GalleryController extends Controller
                     'id' => $item->id,
                     'title' => $item->title,
                     'description' => $item->description,
-                    'label' => $item->label,
+                    'style' => $item->style ?: 'foto',
+                    'photo_position' => $item->photo_position ?: 'kanan',
                     'image' => !empty($item->image) ? asset($item->image) : null,
-                    'image_missing' => !gallery_image_exists($item->image),
+                    'sort_order' => $item->sort_order,
                 ];
             });
 

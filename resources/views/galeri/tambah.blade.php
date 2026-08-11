@@ -23,26 +23,36 @@
               </td>
             </tr>
             <tr>
-              <td>Gambar</td>
+              <td>Gambar <span class="text-danger">*</span></td>
               <td>
                 <input type="file" class="form-control form-control-sm" name="image" id="galeri-image" accept="image/*">
-                <small class="text-muted">Format: jpg, jpeg, png, webp. Maks 5MB. Kosongkan jika tidak ingin mengganti gambar.</small>
+                <small class="text-muted">Format: jpg, jpeg, png, webp. Maks 5MB. Saat edit, kosongkan jika tidak diganti.</small>
                 <div id="galeri-image-preview" class="mt-2" style="display:none;">
                   <img src="" alt="Preview" style="max-width: 220px; max-height: 140px; object-fit: cover; border-radius: 8px;">
                 </div>
               </td>
             </tr>
             <tr>
-              <td>Label</td>
+              <td>Style Galeri <span class="text-danger">*</span></td>
               <td>
-                <input type="text" class="form-control form-control-sm" name="label" id="galeri-label" placeholder="Contoh: Featured / Galeri">
+                <select class="form-control form-control-sm" name="style" id="galeri-style">
+                  <option value="foto">foto</option>
+                  <option value="foto_deskripsi">foto+Deskripsi</option>
+                  <option value="carousel">Carousel</option>
+                </select>
+                <small class="text-muted d-block mt-1" id="galeri-style-hint">
+                  Full width: judul & deskripsi di dalam foto bagian bawah.
+                </small>
               </td>
             </tr>
-            <tr>
-              <td>Urutan</td>
+            <tr id="galeri-position-row" style="display:none;">
+              <td>Posisi Foto</td>
               <td>
-                <input type="number" class="form-control form-control-sm" name="sort_order" id="galeri-sort-order" value="0" min="0">
-                <small class="text-muted">Semakin kecil angkanya, semakin awal ditampilkan.</small>
+                <select class="form-control form-control-sm" name="photo_position" id="galeri-photo-position">
+                  <option value="kanan">Foto di kanan</option>
+                  <option value="kiri">Foto di kiri</option>
+                </select>
+                <small class="text-muted">Khusus style foto+Deskripsi.</small>
               </td>
             </tr>
             <tr>

@@ -29,7 +29,7 @@
                   <th>Gambar</th>
                   <th>Judul</th>
                   <th>Deskripsi</th>
-                  <th>Label</th>
+                  <th>Style Galeri</th>
                   <th>Urutan</th>
                   <th>Status</th>
                   <th>Action</th>
@@ -48,6 +48,12 @@
 
 @section('extra_script')
 <script>
+var styleHints = {
+  foto: 'Full width: judul & deskripsi di dalam foto bagian bawah.',
+  foto_deskripsi: '1 baris: card deskripsi + card foto. Pilih posisi foto kiri/kanan.',
+  carousel: 'Grid maksimal 3 foto per baris. Tambah data Carousel terus untuk baris berikutnya.'
+};
+
 var table = $('#table-data').DataTable({
   processing: true,
   serverSide: false,
@@ -70,35 +76,43 @@ var table = $('#table-data').DataTable({
         return data.length > 80 ? data.substring(0, 80) + '...' : data;
       }
     },
-    { data: 'label', name: 'label', defaultContent: '-' },
+    { data: 'style_label', name: 'style_label' },
     { data: 'sort_order', name: 'sort_order' },
     { data: 'status', name: 'status' },
     { data: 'aksi', name: 'aksi', orderable: false, searchable: false },
   ],
   columnDefs: [
     { targets: '_all', className: 'center' }
-  ],
-  error: function (xhr, error, thrown) {
-    console.error('Galeri DataTable error', xhr.status, xhr.responseText, error, thrown);
-  }
+  ]
 });
+
+function toggleStyleFields() {
+  var style = $('#galeri-style').val();
+  $('#galeri-style-hint').text(styleHints[style] || '');
+  if (style === 'foto_deskripsi') {
+    $('#galeri-position-row').show();
+  } else {
+    $('#galeri-position-row').hide();
+  }
+}
 
 function resetFormGaleri() {
   $('#form-galeri')[0].reset();
   $('#galeri-id').val('');
-  $('#galeri-sort-order').val(0);
+  $('#galeri-style').val('foto');
+  $('#galeri-photo-position').val('kanan');
   $('#galeri-status').val('aktif');
   $('#galeri-image-preview').hide().find('img').attr('src', '');
   $('#galeri-modal-title').text('Form Galeri - Tambah');
   $('#galeri-image').val('');
+  toggleStyleFields();
 }
+
+$('#galeri-style').on('change', toggleStyleFields);
 
 $('#galeri-image').on('change', function () {
   var file = this.files[0];
-  if (!file) {
-    return;
-  }
-
+  if (!file) return;
   var reader = new FileReader();
   reader.onload = function (e) {
     $('#galeri-image-preview').show().find('img').attr('src', e.target.result);
@@ -108,11 +122,13 @@ $('#galeri-image').on('change', function () {
 
 $('#simpan-galeri').on('click', function () {
   var title = $.trim($('#galeri-title').val());
+  var isEdit = !!$('#galeri-id').val();
   if (!title) {
-    iziToast.warning({
-      icon: 'fa fa-info',
-      message: 'Judul wajib diisi!',
-    });
+    iziToast.warning({ icon: 'fa fa-info', message: 'Judul wajib diisi!' });
+    return;
+  }
+  if (!isEdit && !$('#galeri-image')[0].files.length) {
+    iziToast.warning({ icon: 'fa fa-info', message: 'Gambar wajib diupload!' });
     return;
   }
 
@@ -131,11 +147,10 @@ $('#simpan-galeri').on('click', function () {
     cache: false,
     success: function (data) {
       $btn.prop('disabled', false).text('Submit');
-
       if (data.status == 1 || data.status == 3) {
         iziToast.success({
           icon: 'fa fa-save',
-          message: data.message || (data.status == 3 ? 'Data berhasil diubah!' : 'Data berhasil disimpan!'),
+          message: data.message || 'Berhasil disimpan!',
         });
         $('#tambah').modal('hide');
         resetFormGaleri();
@@ -150,13 +165,8 @@ $('#simpan-galeri').on('click', function () {
     error: function (xhr) {
       $btn.prop('disabled', false).text('Submit');
       var message = 'Terjadi kesalahan saat menyimpan data.';
-      if (xhr.responseJSON && xhr.responseJSON.message) {
-        message = xhr.responseJSON.message;
-      }
-      iziToast.error({
-        icon: 'fa fa-times',
-        message: message,
-      });
+      if (xhr.responseJSON && xhr.responseJSON.message) message = xhr.responseJSON.message;
+      iziToast.error({ icon: 'fa fa-times', message: message });
     }
   });
 });
@@ -170,25 +180,21 @@ function edit(id) {
       $('#galeri-id').val(data.id);
       $('#galeri-title').val(data.title);
       $('#galeri-description').val(data.description || '');
-      $('#galeri-label').val(data.label || '');
-      $('#galeri-sort-order').val(data.sort_order || 0);
+      $('#galeri-style').val(data.style || 'foto');
+      $('#galeri-photo-position').val(data.photo_position || 'kanan');
       $('#galeri-status').val(data.status || 'aktif');
       $('#galeri-image').val('');
       $('#galeri-modal-title').text('Form Galeri - Edit');
-
       if (data.image_url) {
         $('#galeri-image-preview').show().find('img').attr('src', data.image_url);
       } else {
         $('#galeri-image-preview').hide().find('img').attr('src', '');
       }
-
+      toggleStyleFields();
       $('#tambah').modal('show');
     },
     error: function () {
-      iziToast.error({
-        icon: 'fa fa-times',
-        message: 'Gagal memuat data untuk diedit.',
-      });
+      iziToast.error({ icon: 'fa fa-times', message: 'Gagal memuat data untuk diedit.' });
     }
   });
 }
@@ -204,34 +210,22 @@ function hapus(id) {
     buttons: [
       ['<button><b>Ya</b></button>', function (instance, toast) {
         instance.hide({ transitionOut: 'fadeOut' }, toast, 'button');
-
         $.ajax({
           url: baseUrl + '/hapusgaleri',
           data: { id: id },
           dataType: 'json',
           success: function (data) {
             if (data.status == 3) {
-              iziToast.success({
-                icon: 'fa fa-trash',
-                message: data.message || 'Data berhasil dihapus!',
-              });
+              iziToast.success({ icon: 'fa fa-trash', message: data.message || 'Data berhasil dihapus!' });
               table.ajax.reload(null, false);
             } else {
-              iziToast.warning({
-                icon: 'fa fa-info',
-                message: data.message || 'Gagal menghapus data.',
-              });
+              iziToast.warning({ icon: 'fa fa-info', message: data.message || 'Gagal menghapus data.' });
             }
           },
           error: function (xhr) {
             var message = 'Gagal menghapus data.';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-              message = xhr.responseJSON.message;
-            }
-            iziToast.error({
-              icon: 'fa fa-times',
-              message: message,
-            });
+            if (xhr.responseJSON && xhr.responseJSON.message) message = xhr.responseJSON.message;
+            iziToast.error({ icon: 'fa fa-times', message: message });
           }
         });
       }, true],
@@ -241,5 +235,9 @@ function hapus(id) {
     ]
   });
 }
+
+$(function () {
+  toggleStyleFields();
+});
 </script>
 @endsection
