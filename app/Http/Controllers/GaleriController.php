@@ -96,7 +96,10 @@ class GaleriController extends Controller
             'style' => 'required|in:foto,foto_deskripsi,carousel',
             'photo_position' => 'nullable|in:kiri,kanan',
             'status' => 'nullable|in:aktif,nonaktif',
+            'remove_image' => 'nullable|in:0,1',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $isUpdate = !empty($req->id);
@@ -104,9 +107,14 @@ class GaleriController extends Controller
         $photoPosition = $style === 'foto_deskripsi'
             ? ($req->photo_position ?: 'kanan')
             : null;
+        $removeImage = $req->input('remove_image') === '1';
 
         DB::beginTransaction();
         try {
+            if ($style === 'carousel') {
+                return $this->simpanCarousel($req, $isUpdate, $removeImage);
+            }
+
             if ($isUpdate) {
                 $existing = DB::table('galeri')->where('id', $req->id)->first();
                 if (!$existing) {
@@ -175,6 +183,105 @@ class GaleriController extends Controller
                 'message' => 'Gagal menyimpan data: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function simpanCarousel(Request $req, bool $isUpdate, bool $removeImage)
+    {
+        $files = $req->file('images', []);
+        if (!is_array($files)) {
+            $files = $files ? [$files] : [];
+        }
+        $files = array_values(array_filter($files));
+
+        if ($isUpdate) {
+            $existing = DB::table('galeri')->where('id', $req->id)->first();
+            if (!$existing) {
+                throw new \RuntimeException('Data galeri tidak ditemukan.');
+            }
+
+            $imagePath = $existing->image;
+            $fileIndex = 0;
+
+            if ($removeImage) {
+                $this->deleteGaleriImageFile($existing->image);
+                $imagePath = null;
+            }
+
+            if (count($files) > 0) {
+                if ($imagePath) {
+                    $this->deleteGaleriImageFile($imagePath);
+                }
+                $imagePath = $this->storeGaleriImage($files[0]);
+                $fileIndex = 1;
+            }
+
+            if (!$imagePath) {
+                throw new \RuntimeException('Minimal 1 foto untuk Carousel.');
+            }
+
+            DB::table('galeri')
+                ->where('id', $req->id)
+                ->update([
+                    'title' => $req->title,
+                    'description' => $req->description,
+                    'image' => $imagePath,
+                    'style' => 'carousel',
+                    'photo_position' => null,
+                    'status' => $req->status ?: 'aktif',
+                    'updated_at' => Carbon::now('Asia/Jakarta'),
+                ]);
+
+            // Foto tambahan jadi record carousel baru
+            $nextOrder = ((int) DB::table('galeri')->max('sort_order')) + 1;
+            for ($i = $fileIndex; $i < count($files); $i++) {
+                $path = $this->storeGaleriImage($files[$i]);
+                DB::table('galeri')->insert([
+                    'title' => $req->title,
+                    'description' => $req->description,
+                    'image' => $path,
+                    'style' => 'carousel',
+                    'photo_position' => null,
+                    'sort_order' => $nextOrder++,
+                    'status' => $req->status ?: 'aktif',
+                    'created_at' => Carbon::now('Asia/Jakarta'),
+                    'updated_at' => Carbon::now('Asia/Jakarta'),
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 3,
+                'message' => 'Data carousel berhasil diubah',
+            ]);
+        }
+
+        if (count($files) === 0) {
+            throw new \RuntimeException('Minimal 1 foto untuk Carousel.');
+        }
+
+        $nextOrder = ((int) DB::table('galeri')->max('sort_order')) + 1;
+        foreach ($files as $file) {
+            $path = $this->storeGaleriImage($file);
+            DB::table('galeri')->insert([
+                'title' => $req->title,
+                'description' => $req->description,
+                'image' => $path,
+                'style' => 'carousel',
+                'photo_position' => null,
+                'sort_order' => $nextOrder++,
+                'status' => $req->status ?: 'aktif',
+                'created_at' => Carbon::now('Asia/Jakarta'),
+                'updated_at' => Carbon::now('Asia/Jakarta'),
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'status' => 1,
+            'message' => count($files) . ' foto carousel berhasil disimpan',
+        ]);
     }
 
     public function hapus(Request $req)
