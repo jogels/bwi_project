@@ -39,22 +39,27 @@
 
     .password-toggle {
       position: absolute;
-      right: 18px;
-      top: 22px;
+      right: 8px;
+      top: 0;
+      height: 45px;
       z-index: 10;
       border: 0;
       background: transparent;
-      color: rgba(255, 255, 255, 0.85);
+      color: #000;
       font-size: 18px;
       cursor: pointer;
-      padding: 6px;
+      padding: 0 10px;
       line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .password-toggle:hover,
     .password-toggle:focus {
-      color: #fff;
+      color: #000;
       outline: none;
+      opacity: 0.75;
     }
 
     #password {
