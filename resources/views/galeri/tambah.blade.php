@@ -87,34 +87,46 @@
 <style>
   .galeri-carousel-preview-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, 88px);
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 2px;
   }
   .galeri-carousel-preview-item {
     position: relative;
-    aspect-ratio: 1 / 1;
-    border-radius: 10px;
+    width: 88px;
+    height: 88px;
+    border-radius: 8px;
     overflow: hidden;
     background: #eee;
+    flex-shrink: 0;
   }
   .galeri-carousel-preview-item img {
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    inset: 0;
+    width: 88px !important;
+    height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
     object-fit: cover;
+    object-position: center;
     display: block;
   }
   .galeri-carousel-preview-remove {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 28px;
-    height: 28px;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+    width: 22px;
+    height: 22px;
     border: 0;
     border-radius: 50%;
-    background: rgba(0,0,0,.7);
+    background: rgba(0,0,0,.75);
     color: #fff;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1;
+    padding: 0;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -122,10 +134,5 @@
   }
   .galeri-carousel-preview-remove:hover {
     background: #c0392b;
-  }
-  @media (max-width: 575px) {
-    .galeri-carousel-preview-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
   }
 </style>
