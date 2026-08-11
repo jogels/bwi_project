@@ -23,14 +23,16 @@
                 @if ($items->get(0))
                     <article class="bento-card bento-hero-text">
                         <div class="bento-card-inner">
-                            <span class="bento-label">Featured</span>
+                            <span class="bento-label">{{ $items[0]->label ?: 'Featured' }}</span>
                             <h2>{{ $items[0]->title }}</h2>
                             <p>{{ $items[0]->description }}</p>
                         </div>
                     </article>
+                    @if (!empty($items[0]->image))
                     <a href="{{ $items[0]->image }}" class="bento-card bento-hero-image" data-fancybox="gallery" data-caption="{{ $items[0]->title }}">
                         <img src="{{ $items[0]->image }}" alt="{{ $items[0]->title }}">
                     </a>
+                    @endif
                 @endif
 
                 {{-- Row 2: cream text + image --}}
@@ -41,9 +43,13 @@
                             <p>{{ $items[1]->description }}</p>
                         </div>
                     </article>
+                    @if (!empty($items[1]->image))
                     <a href="{{ $items[1]->image }}" class="bento-card bento-split-image" data-fancybox="gallery" data-caption="{{ $items[1]->title }}">
                         <img src="{{ $items[1]->image }}" alt="{{ $items[1]->title }}">
                     </a>
+                    @else
+                    <article class="bento-card bento-split-image" style="background:#d7d1c5;"></article>
+                    @endif
                 @endif
 
                 {{-- Row 3: stacked images + large text --}}
@@ -71,7 +77,7 @@
                 @if ($items->get(4))
                     <article class="bento-card bento-large-text">
                         <div class="bento-card-inner">
-                            <span class="bento-label dark">Galeri</span>
+                            <span class="bento-label dark">{{ $items[4]->label ?: 'Galeri' }}</span>
                             <h3>{{ $items[4]->title }}</h3>
                             <p>{{ $items[4]->description }}</p>
                         </div>

@@ -31,13 +31,12 @@ class GaleriController extends Controller
                     '</div>';
             })
             ->addColumn('gambar', function ($row) {
-                if (empty($row->image)) {
+                $src = gallery_image_url($row->image);
+                if (!$src) {
                     return '-';
                 }
 
-                $src = (strpos($row->image, 'http') === 0) ? $row->image : asset($row->image);
-
-                return '<img src="' . e($src) . '" alt="' . e($row->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;">';
+                return '<img src="' . e($src) . '" alt="' . e($row->title) . '" style="width:70px;height:50px;object-fit:cover;border-radius:6px;" onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'File tidak ditemukan\';">';
             })
             ->editColumn('description', function ($row) {
                 return $row->description ?: '-';
@@ -68,30 +67,28 @@ class GaleriController extends Controller
 
             if ($req->hasFile('image')) {
                 $file = $req->file('image');
-                $extension = strtolower($file->getClientOriginalExtension());
+                $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
                 $tgl = Carbon::now('Asia/Jakarta');
                 $folder = $tgl->format('Ym') . $tgl->timestamp;
-                $dir = 'image/uploads/Galeri/' . $folder;
-                $absoluteDir = public_path($dir);
+                $relativeDir = 'image/uploads/Galeri/' . $folder;
+                $absoluteDir = public_path($relativeDir);
 
                 if (!File::exists($absoluteDir)) {
-                    File::makeDirectory($absoluteDir, 0777, true);
+                    File::makeDirectory($absoluteDir, 0755, true);
                 }
 
                 $name = 'galeri_' . $tgl->timestamp . '.' . $extension;
+                $absoluteFile = $absoluteDir . DIRECTORY_SEPARATOR . $name;
+
+                // Simpan file secara eksplisit ke public/
                 $file->move($absoluteDir, $name);
 
-                $imagePath = $dir . '/' . $name;
-                $absoluteImagePath = public_path($imagePath);
-
-                // Kompresi opsional; jangan gagalkan simpan jika compress gagal
-                if (function_exists('compressImage') && File::exists($absoluteImagePath) && in_array($extension, ['jpg', 'jpeg', 'png', 'gif'], true)) {
-                    try {
-                        compressImage($extension, $absoluteImagePath, $absoluteImagePath, 60);
-                    } catch (\Throwable $compressError) {
-                        // Biarkan file asli tetap dipakai
-                    }
+                if (!File::exists($absoluteFile)) {
+                    throw new \RuntimeException('Upload gambar gagal: file tidak ditemukan setelah disimpan.');
                 }
+
+                // Path relatif yang disimpan di DB (bukan path lokal absolut)
+                $imagePath = $relativeDir . '/' . $name;
             }
 
             DB::table('galeri')->insert([
@@ -110,6 +107,7 @@ class GaleriController extends Controller
             return response()->json([
                 'status' => 1,
                 'message' => 'Data galeri berhasil disimpan',
+                'image_url' => gallery_image_url($imagePath),
             ]);
         } catch (\Exception $e) {
             DB::rollback();

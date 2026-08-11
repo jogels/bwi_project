@@ -58,6 +58,26 @@ function compressImage($type,$source, $destination, $quality) {
 
  }
 
+function gallery_image_url($path): ?string
+{
+    if ($path === null || $path === '') {
+        return null;
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    $relative = ltrim(str_replace('\\', '/', $path), '/');
+
+    // Ikuti host yang sedang dibuka (local/production), bukan hanya APP_URL
+    if (app()->runningInConsole()) {
+        return asset($relative);
+    }
+
+    return rtrim(request()->getSchemeAndHttpHost() . request()->getBasePath(), '/') . '/' . $relative;
+}
+
 function parseWakafCoordinate($value): ?float
 {
     if ($value === null || $value === '') {
