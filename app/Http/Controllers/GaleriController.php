@@ -68,21 +68,29 @@ class GaleriController extends Controller
 
             if ($req->hasFile('image')) {
                 $file = $req->file('image');
+                $extension = strtolower($file->getClientOriginalExtension());
                 $tgl = Carbon::now('Asia/Jakarta');
                 $folder = $tgl->format('Ym') . $tgl->timestamp;
                 $dir = 'image/uploads/Galeri/' . $folder;
-                $path = public_path($dir);
+                $absoluteDir = public_path($dir);
 
-                if (!File::exists($path)) {
-                    File::makeDirectory($path, 0777, true);
+                if (!File::exists($absoluteDir)) {
+                    File::makeDirectory($absoluteDir, 0777, true);
                 }
 
-                $name = 'galeri_' . $tgl->timestamp . '.' . $file->getClientOriginalExtension();
-                $file->move($path, $name);
-                $imagePath = $dir . '/' . $name;
+                $name = 'galeri_' . $tgl->timestamp . '.' . $extension;
+                $file->move($absoluteDir, $name);
 
-                if (function_exists('compressImage')) {
-                    compressImage($file->getClientOriginalExtension(), $imagePath, $imagePath, 60);
+                $imagePath = $dir . '/' . $name;
+                $absoluteImagePath = public_path($imagePath);
+
+                // Kompresi opsional; jangan gagalkan simpan jika compress gagal
+                if (function_exists('compressImage') && File::exists($absoluteImagePath) && in_array($extension, ['jpg', 'jpeg', 'png', 'gif'], true)) {
+                    try {
+                        compressImage($extension, $absoluteImagePath, $absoluteImagePath, 60);
+                    } catch (\Throwable $compressError) {
+                        // Biarkan file asli tetap dipakai
+                    }
                 }
             }
 
