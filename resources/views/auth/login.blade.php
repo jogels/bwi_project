@@ -32,6 +32,34 @@
     .merah{
       background: red;
     }
+
+    .wrap-input100 {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 18px;
+      top: 22px;
+      z-index: 10;
+      border: 0;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 6px;
+      line-height: 1;
+    }
+
+    .password-toggle:hover,
+    .password-toggle:focus {
+      color: #fff;
+      outline: none;
+    }
+
+    #password {
+      padding-right: 48px;
+    }
   </style>
 </head>
 <body>
@@ -63,6 +91,9 @@
           <div class="wrap-input100 validate-input" data-validate="Enter password">
             <input required="" class="input100" autocomplete="off" value="" type="password" name="password" id="password" placeholder="Password">
             <span class="focus-input100" data-placeholder="&#xf191;"></span>
+            <button type="button" class="password-toggle" id="togglePassword" aria-label="Tampilkan password" title="Tampilkan password">
+              <i class="fa fa-eye" id="togglePasswordIcon"></i>
+            </button>
             @if (session('password'))
             <div class="red"  style="color: red"><b>Password Yang Anda Masukan Salah</b></div>
             @endif
@@ -119,4 +150,16 @@ window.onload = function(e){
   $('#username').val(null);
   $('#password').val(null);
 }
+
+$('#togglePassword').on('click', function () {
+  var passwordInput = $('#password');
+  var icon = $('#togglePasswordIcon');
+  var isHidden = passwordInput.attr('type') === 'password';
+
+  passwordInput.attr('type', isHidden ? 'text' : 'password');
+  icon.toggleClass('fa-eye', !isHidden);
+  icon.toggleClass('fa-eye-slash', isHidden);
+  $(this).attr('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+  $(this).attr('title', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+});
 </script>
