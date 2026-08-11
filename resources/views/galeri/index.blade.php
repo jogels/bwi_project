@@ -85,15 +85,17 @@ var table = $('#table-data').DataTable({
 
 function resetFormGaleri() {
   $('#form-galeri')[0].reset();
+  $('#galeri-id').val('');
   $('#galeri-sort-order').val(0);
   $('#galeri-status').val('aktif');
   $('#galeri-image-preview').hide().find('img').attr('src', '');
+  $('#galeri-modal-title').text('Form Galeri - Tambah');
+  $('#galeri-image').val('');
 }
 
 $('#galeri-image').on('change', function () {
   var file = this.files[0];
   if (!file) {
-    $('#galeri-image-preview').hide();
     return;
   }
 
@@ -130,10 +132,10 @@ $('#simpan-galeri').on('click', function () {
     success: function (data) {
       $btn.prop('disabled', false).text('Submit');
 
-      if (data.status == 1) {
+      if (data.status == 1 || data.status == 3) {
         iziToast.success({
           icon: 'fa fa-save',
-          message: 'Data galeri berhasil disimpan!',
+          message: data.message || (data.status == 3 ? 'Data berhasil diubah!' : 'Data berhasil disimpan!'),
         });
         $('#tambah').modal('hide');
         resetFormGaleri();
@@ -160,11 +162,84 @@ $('#simpan-galeri').on('click', function () {
 });
 
 function edit(id) {
-  alert('Fitur edit akan menyusul. ID: ' + id);
+  $.ajax({
+    url: baseUrl + '/editgaleri',
+    data: { id: id },
+    dataType: 'json',
+    success: function (data) {
+      $('#galeri-id').val(data.id);
+      $('#galeri-title').val(data.title);
+      $('#galeri-description').val(data.description || '');
+      $('#galeri-label').val(data.label || '');
+      $('#galeri-sort-order').val(data.sort_order || 0);
+      $('#galeri-status').val(data.status || 'aktif');
+      $('#galeri-image').val('');
+      $('#galeri-modal-title').text('Form Galeri - Edit');
+
+      if (data.image_url) {
+        $('#galeri-image-preview').show().find('img').attr('src', data.image_url);
+      } else {
+        $('#galeri-image-preview').hide().find('img').attr('src', '');
+      }
+
+      $('#tambah').modal('show');
+    },
+    error: function () {
+      iziToast.error({
+        icon: 'fa fa-times',
+        message: 'Gagal memuat data untuk diedit.',
+      });
+    }
+  });
 }
 
 function hapus(id) {
-  alert('Fitur hapus akan menyusul. ID: ' + id);
+  iziToast.question({
+    close: false,
+    overlay: true,
+    displayMode: 'once',
+    title: 'Hapus data',
+    message: 'Apakah anda yakin ingin menghapus data galeri ini?',
+    position: 'center',
+    buttons: [
+      ['<button><b>Ya</b></button>', function (instance, toast) {
+        instance.hide({ transitionOut: 'fadeOut' }, toast, 'button');
+
+        $.ajax({
+          url: baseUrl + '/hapusgaleri',
+          data: { id: id },
+          dataType: 'json',
+          success: function (data) {
+            if (data.status == 3) {
+              iziToast.success({
+                icon: 'fa fa-trash',
+                message: data.message || 'Data berhasil dihapus!',
+              });
+              table.ajax.reload(null, false);
+            } else {
+              iziToast.warning({
+                icon: 'fa fa-info',
+                message: data.message || 'Gagal menghapus data.',
+              });
+            }
+          },
+          error: function (xhr) {
+            var message = 'Gagal menghapus data.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              message = xhr.responseJSON.message;
+            }
+            iziToast.error({
+              icon: 'fa fa-times',
+              message: message,
+            });
+          }
+        });
+      }, true],
+      ['<button>Tidak</button>', function (instance, toast) {
+        instance.hide({ transitionOut: 'fadeOut' }, toast, 'button');
+      }]
+    ]
+  });
 }
 </script>
 @endsection

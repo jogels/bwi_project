@@ -54,9 +54,30 @@ class GaleriController extends Controller
             ->make(true);
     }
 
+    public function edit(Request $req)
+    {
+        $data = DB::table('galeri')->where('id', $req->id)->first();
+
+        if (!$data) {
+            return response()->json(['status' => 0, 'message' => 'Data tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'id' => $data->id,
+            'title' => $data->title,
+            'description' => $data->description,
+            'image' => $data->image,
+            'image_url' => $data->image ? asset($data->image) : null,
+            'label' => $data->label,
+            'sort_order' => $data->sort_order,
+            'status' => $data->status,
+        ]);
+    }
+
     public function simpan(Request $req)
     {
         $req->validate([
+            'id' => 'nullable|integer',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'label' => 'nullable|string|max:100',
@@ -65,44 +86,52 @@ class GaleriController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        // Hanya INSERT ke tabel galeri. Tidak menghapus/mengubah data lain.
+        $isUpdate = !empty($req->id);
+
         DB::beginTransaction();
         try {
-            $imagePath = null;
-
-            if ($req->hasFile('image')) {
-                // Pola sama dengan BannerController: simpan relatif ke folder image/
-                $file = $req->file('image');
-                $tgl = Carbon::now('Asia/Jakarta');
-                $folder = $tgl->year . $tgl->month . $tgl->timestamp;
-                $dir = 'image/uploads/Galeri/' . $folder;
-                $childPath = $dir . '/';
-                $path = $childPath;
-                $name = $folder . '.' . $file->getClientOriginalExtension();
-
-                if (!File::exists($path)) {
-                    if (!File::makeDirectory($path, 0777, true)) {
-                        throw new \RuntimeException('Gagal membuat folder upload galeri.');
-                    }
+            if ($isUpdate) {
+                $existing = DB::table('galeri')->where('id', $req->id)->first();
+                if (!$existing) {
+                    throw new \RuntimeException('Data galeri tidak ditemukan.');
                 }
 
-                $file->move($path, $name);
-                $imagePath = $childPath . $name;
+                $imagePath = $existing->image;
 
-                // Kompres opsional seperti banner (relative path)
-                if (function_exists('compressImage')) {
-                    try {
-                        compressImage($file->getClientOriginalExtension(), $imagePath, $imagePath, 60);
-                    } catch (\Throwable $e) {
-                        // biarkan file asli tetap dipakai
-                    }
+                if ($req->hasFile('image')) {
+                    $newImage = $this->storeGaleriImage($req->file('image'));
+                    $this->deleteGaleriImageFile($existing->image);
+                    $imagePath = $newImage;
                 }
 
-                if (!gallery_image_exists($imagePath)) {
-                    throw new \RuntimeException('Upload gambar gagal: file tidak ditemukan setelah disimpan.');
-                }
+                // Hanya UPDATE baris di tabel galeri
+                DB::table('galeri')
+                    ->where('id', $req->id)
+                    ->update([
+                        'title' => $req->title,
+                        'description' => $req->description,
+                        'image' => $imagePath,
+                        'label' => $req->label,
+                        'sort_order' => (int) ($req->sort_order ?? 0),
+                        'status' => $req->status ?: 'aktif',
+                        'updated_at' => Carbon::now('Asia/Jakarta'),
+                    ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'status' => 3,
+                    'message' => 'Data galeri berhasil diubah',
+                    'image_url' => $imagePath ? asset($imagePath) : null,
+                ]);
             }
 
+            $imagePath = null;
+            if ($req->hasFile('image')) {
+                $imagePath = $this->storeGaleriImage($req->file('image'));
+            }
+
+            // Hanya INSERT ke tabel galeri
             DB::table('galeri')->insert([
                 'title' => $req->title,
                 'description' => $req->description,
@@ -128,6 +157,107 @@ class GaleriController extends Controller
                 'status' => 2,
                 'message' => 'Gagal menyimpan data: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function hapus(Request $req)
+    {
+        $id = $req->id;
+        if (empty($id)) {
+            return response()->json(['status' => 4, 'message' => 'ID tidak valid'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Ambil hanya dari tabel galeri
+            $data = DB::table('galeri')->where('id', $id)->first();
+            if (!$data) {
+                throw new \RuntimeException('Data galeri tidak ditemukan.');
+            }
+
+            // Hapus file gambar galeri saja (jika path-nya milik Galeri)
+            $this->deleteGaleriImageFile($data->image);
+
+            // Hapus hanya 1 baris di tabel galeri
+            DB::table('galeri')->where('id', $id)->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 3,
+                'message' => 'Data galeri berhasil dihapus',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'status' => 4,
+                'message' => 'Gagal menghapus data: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function storeGaleriImage($file): string
+    {
+        $tgl = Carbon::now('Asia/Jakarta');
+        $folder = $tgl->year . $tgl->month . $tgl->timestamp;
+        $dir = 'image/uploads/Galeri/' . $folder;
+        $childPath = $dir . '/';
+        $path = $childPath;
+        $name = $folder . '.' . $file->getClientOriginalExtension();
+
+        if (!File::exists($path)) {
+            if (!File::makeDirectory($path, 0777, true)) {
+                throw new \RuntimeException('Gagal membuat folder upload galeri.');
+            }
+        }
+
+        $file->move($path, $name);
+        $imagePath = $childPath . $name;
+
+        if (function_exists('compressImage')) {
+            try {
+                compressImage($file->getClientOriginalExtension(), $imagePath, $imagePath, 60);
+            } catch (\Throwable $e) {
+                // biarkan file asli
+            }
+        }
+
+        if (!gallery_image_exists($imagePath)) {
+            throw new \RuntimeException('Upload gambar gagal: file tidak ditemukan setelah disimpan.');
+        }
+
+        return $imagePath;
+    }
+
+    private function deleteGaleriImageFile($imagePath): void
+    {
+        if (empty($imagePath)) {
+            return;
+        }
+
+        $relative = ltrim(str_replace('\\', '/', $imagePath), '/');
+
+        // Amankan: hanya hapus file di folder Galeri
+        if (strpos($relative, 'image/uploads/Galeri/') !== 0) {
+            return;
+        }
+
+        $candidates = [
+            base_path($relative),
+            public_path($relative),
+        ];
+
+        foreach ($candidates as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+
+        // Hapus folder kosong jika memungkinkan
+        $dir = dirname(base_path($relative));
+        if (is_dir($dir) && count(glob($dir . '/*')) === 0) {
+            @rmdir($dir);
         }
     }
 }
