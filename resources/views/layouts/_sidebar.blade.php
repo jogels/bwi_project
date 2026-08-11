@@ -88,6 +88,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ Request::is('galeri-admin') || Request::is('galeri-admin/*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ url('/galeri-admin') }}">
+                        <span class="menu-title">Manajemen Galeri</span>
+                        <i class="fa fa-image"></i>
+                    </a>
+                </li>
+
                 <li class="nav-item {{ Request::is('/cities') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ url('/cities') }}">
                         <span class="menu-title">Kota</span>

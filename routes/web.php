@@ -111,6 +111,9 @@ Route::get('/doeditbanner', 'BannerController@doedit');
 Route::get('/removeimagebanner', 'BannerController@removeimage');
 Route::get('/hapusbanner', 'BannerController@hapus');
 
+Route::get('/galeri-admin', 'GaleriController@index');
+Route::get('/galeritable', 'GaleriController@datatable');
+
 Route::post('/import-data', 'ImportController@importExcel')->name('import.excel');
 }); // End Route Groub middleware auth
 Route::get('/download-template', 'DownloadTemplateController@index')->name('download.template');
