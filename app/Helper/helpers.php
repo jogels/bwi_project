@@ -68,29 +68,24 @@ function gallery_image_url($path): ?string
         return $path;
     }
 
-    $relative = ltrim(str_replace('\\', '/', $path), '/');
-    $absolute = public_path($relative);
-
-    // Jika file fisik belum ada di server ini, jangan kembalikan URL kosong/rusak
-    if (!is_file($absolute)) {
-        return asset('assets/images/logo.png');
-    }
-
-    // Ikuti host yang sedang dibuka (local/production)
-    if (app()->runningInConsole()) {
-        return asset($relative);
-    }
-
-    return rtrim(request()->getSchemeAndHttpHost() . request()->getBasePath(), '/') . '/' . $relative;
+    // Sama seperti banner di homepage: asset('image/uploads/...')
+    return asset(ltrim(str_replace('\\', '/', $path), '/'));
 }
 
 function gallery_image_exists($path): bool
 {
-    if ($path === null || $path === '' || preg_match('#^https?://#i', $path)) {
+    if ($path === null || $path === '') {
+        return false;
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
         return true;
     }
 
-    return is_file(public_path(ltrim(str_replace('\\', '/', $path), '/')));
+    $relative = ltrim(str_replace('\\', '/', $path), '/');
+
+    // Banner tersimpan di root project/image, bukan public/image
+    return is_file(base_path($relative)) || is_file(public_path($relative));
 }
 
 function parseWakafCoordinate($value): ?float

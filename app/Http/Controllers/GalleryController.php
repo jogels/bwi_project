@@ -20,7 +20,7 @@ class GalleryController extends Controller
                     'title' => $item->title,
                     'description' => $item->description,
                     'label' => $item->label,
-                    'image' => gallery_image_url($item->image),
+                    'image' => !empty($item->image) ? asset($item->image) : null,
                     'image_missing' => !gallery_image_exists($item->image),
                 ];
             });

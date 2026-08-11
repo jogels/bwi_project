@@ -31,11 +31,11 @@ class GaleriController extends Controller
                     '</div>';
             })
             ->addColumn('gambar', function ($row) {
-                $src = gallery_image_url($row->image);
-                if (!$src) {
+                if (empty($row->image)) {
                     return '-';
                 }
 
+                $src = asset($row->image);
                 $missing = !gallery_image_exists($row->image);
                 $badge = $missing
                     ? '<div style="font-size:11px;color:#c0392b;margin-top:4px;">File belum ada di server</div>'
@@ -71,29 +71,36 @@ class GaleriController extends Controller
             $imagePath = null;
 
             if ($req->hasFile('image')) {
+                // Pola sama dengan BannerController: simpan relatif ke folder image/
                 $file = $req->file('image');
-                $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
                 $tgl = Carbon::now('Asia/Jakarta');
-                $folder = $tgl->format('Ym') . $tgl->timestamp;
-                $relativeDir = 'image/uploads/Galeri/' . $folder;
-                $absoluteDir = public_path($relativeDir);
+                $folder = $tgl->year . $tgl->month . $tgl->timestamp;
+                $dir = 'image/uploads/Galeri/' . $folder;
+                $childPath = $dir . '/';
+                $path = $childPath;
+                $name = $folder . '.' . $file->getClientOriginalExtension();
 
-                if (!File::exists($absoluteDir)) {
-                    File::makeDirectory($absoluteDir, 0755, true);
+                if (!File::exists($path)) {
+                    if (!File::makeDirectory($path, 0777, true)) {
+                        throw new \RuntimeException('Gagal membuat folder upload galeri.');
+                    }
                 }
 
-                $name = 'galeri_' . $tgl->timestamp . '.' . $extension;
-                $absoluteFile = $absoluteDir . DIRECTORY_SEPARATOR . $name;
+                $file->move($path, $name);
+                $imagePath = $childPath . $name;
 
-                // Simpan file secara eksplisit ke public/
-                $file->move($absoluteDir, $name);
+                // Kompres opsional seperti banner (relative path)
+                if (function_exists('compressImage')) {
+                    try {
+                        compressImage($file->getClientOriginalExtension(), $imagePath, $imagePath, 60);
+                    } catch (\Throwable $e) {
+                        // biarkan file asli tetap dipakai
+                    }
+                }
 
-                if (!File::exists($absoluteFile)) {
+                if (!gallery_image_exists($imagePath)) {
                     throw new \RuntimeException('Upload gambar gagal: file tidak ditemukan setelah disimpan.');
                 }
-
-                // Path relatif yang disimpan di DB (bukan path lokal absolut)
-                $imagePath = $relativeDir . '/' . $name;
             }
 
             DB::table('galeri')->insert([
@@ -112,9 +119,7 @@ class GaleriController extends Controller
             return response()->json([
                 'status' => 1,
                 'message' => 'Data galeri berhasil disimpan',
-                'image_url' => gallery_image_url($imagePath),
-                'image_exists' => $imagePath ? gallery_image_exists($imagePath) : false,
-                'saved_to' => $imagePath ? public_path($imagePath) : null,
+                'image_url' => $imagePath ? asset($imagePath) : null,
             ]);
         } catch (\Exception $e) {
             DB::rollback();
