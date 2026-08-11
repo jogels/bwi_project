@@ -25,6 +25,7 @@ Route::get('/about', 'AboutController@index')->name('about');
 Route::get('/organization/structure', 'OrganizationController@showStructure')->name('organization.structure');
 Route::get('/vision-mission', 'VisionMissionController@index')->name('vision-mission');
 Route::get('/literasi', 'LiterasiController@index')->name('literasi.index');
+Route::get('/galeri', 'GalleryController@index')->name('gallery.index');
 
 Route::get('/pdf-view/{type}', 'PdfController@show')->name('pdf.show');
 

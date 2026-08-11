@@ -33,6 +33,9 @@
             <li class="menu-item-has-children">
                 <a href="https://dki.bwi.go.id/"><span class="mr-15"></span>Wakaf Uang</a>
             </li>
+            <li class="menu-item-has-children">
+                <a href="{{ route('gallery.index') }}"><span class="mr-15"></span>Galeri</a>
+            </li>
         </ul>
     </div>
 </aside>
@@ -73,6 +76,7 @@
                                     <li class="cat-item cat-item-5"><a href="{{ route('pdf.show', 'peraturan-bwi') }}">Peraturan BWI</a></li>
                                     <li class="cat-item cat-item-6"><a href="{{ route('pdf.show', 'peraturan-mentri-agama') }}">Peraturan Mentri Agama</a></li>
                                     <li class="cat-item cat-item-8"><a href="https://dki.bwi.go.id/">Wakaf Uang</a></li>
+                                    <li class="cat-item cat-item-9"><a href="{{ route('gallery.index') }}">Galeri</a></li>
                                 </ul>
                         <nav class="flex-grow-1">
 
@@ -116,6 +120,9 @@
                                 </li>
                                 <li class="menu-item-has-children">
                                     <a href="https://dki.bwi.go.id/"><span class="mr-15"></span>Wakaf Uang</a>
+                                </li>
+                                <li class="menu-item-has-children">
+                                    <a href="{{ route('gallery.index') }}"><span class="mr-15"></span>Galeri</a>
                                 </li>
                             </ul>
                         </nav>
